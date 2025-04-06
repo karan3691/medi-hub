@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ToastContainer, toast } from 'react-toastify'
 import { CardStore, GetStore } from '../../helper/Medcinefuncations'
+import { Link } from 'react-router-dom'
+import { FaHeart, FaRegHeart, FaShoppingCart } from 'react-icons/fa'
 
 function MedicineCard({
     products,
@@ -9,7 +11,8 @@ function MedicineCard({
     const navigate = useNavigate()
     const [CartId, setCartId] = useState(GetStore())
     const location = useLocation().pathname.replace("/shop-by-category/", " ").trim()
-    console.log(location);
+    const [isWishlisted, setIsWishlisted] = useState(false)
+    const [quantity, setQuantity] = useState(1)
 
     const handleCart = (medi) => {
         const response = CardStore(medi);
@@ -25,6 +28,24 @@ function MedicineCard({
       useEffect(() => {
         setCartId(GetStore());
       }, []); // Separate useEffect for CartId
+
+    const handleWishlist = () => {
+        setIsWishlisted(!isWishlisted)
+        if (!isWishlisted) {
+            toast.success(`${products.name} added to wishlist!`)
+        } else {
+            toast.info(`${products.name} removed from wishlist`)
+        }
+    }
+
+    const increaseQuantity = () => {
+        if (quantity < 10) setQuantity(quantity + 1)
+    }
+
+    const decreaseQuantity = () => {
+        if (quantity > 1) setQuantity(quantity - 1)
+    }
+
     return (
         <>
                 <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5 md:justify-items-start justify-items-center'>

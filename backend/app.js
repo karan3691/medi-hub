@@ -32,6 +32,7 @@ import medicineRouter from "./src/routes/medicine.routes.js";
 import CartRouter from "./src/routes/UserCart.routes.js";
 import PaymentRouter from "./src/routes/payment.routes.js";
 import TestimonialRouter from "./src/routes/testimonial.routes.js";
+import orderRouter from "./src/routes/order.routes.js";
 
 // Define the root route
 // app.get('/', (req, res) => {
@@ -46,6 +47,7 @@ app.use("/api/v1/medicines", medicineRouter);
 app.use("/api/v1/medicines-cart", CartRouter)
 app.use("/api/v1/payment", PaymentRouter)
 app.use("/api/v1/testimonial", TestimonialRouter)
+app.use("/api/v1/orders", orderRouter)
 
 
 // error middleware

@@ -20,7 +20,7 @@ import SpecialitiesCard from "../components/topspecialities/SpecialitiesCard.jsx
 
 
 //? Medicines
-import MedicinesPage from "../pages/medicines_page/MedicinesPage.jsx";
+import MedicinesPage from "../pages/MedicinesPage.jsx";
 import MedicineCard from "../components/medicines/MedicineCard.jsx";
 import SearchMedicines from "../components/medicines/search_medicines/SearchMedicines.jsx";
 import ShopByCategory from "../components/medicines/shop_by_category/ShopByCategory.jsx";
@@ -28,6 +28,9 @@ import ShopByBrand from "../components/medicines/shop_by_brand/ShopByBrand.jsx";
 import HotSellers from "../components/medicines/hot_sellers/HotSellers.jsx";
 import ShopByDiscount from "../components/medicines/shopy_by_discount/ShopByDiscount.jsx";
 import ProductsByCategory from "../pages/medicines_page/products_by_category_page/ProductsByCategory.jsx";
+import ProductDetailsPage from "../pages/medicines_page/ProductDetailsPage.jsx";
+import FeaturedMedicines from "../components/medicines/FeaturedMedicines.jsx";
+import ProductCard from "../components/medicines/ProductCard.jsx";
 
 //? Login & Signup
 import LoginPage from "../pages/login_signup_page/LoginPage.jsx";
@@ -48,6 +51,7 @@ import PrivacyPolicyPage from "../pages/privacy_policy_page/PrivacyPolicyPage.js
 
 
 //? Patient's Dashboard
+import PatientDashboardPage from "../pages/patient_dashboard_page/PatientDashboardPage.jsx";
 
 //? Doctos's Dashboard
 
@@ -56,7 +60,6 @@ import PrivacyPolicyPage from "../pages/privacy_policy_page/PrivacyPolicyPage.js
 
 
 //? Order History
-import ProductCard from "../components/ProductCard.jsx";
 import OrderHistoryPage from "../pages/order_history_page/OrderHistoryPage.jsx";
 
 
@@ -85,7 +88,7 @@ import useLoading from "../../hooks/useLoading.js";
 export {
   axios, Navbar, Footer, SkeletonLoading, ErrorPage, HomePage, Hero, WhyUs, Testimonials, AllDoctorsPage, DoctorsCard, SpecialitiesPage, SpecialitiesCard, MedicinesPage, MedicineCard, SearchMedicines, ShopByCategory, ShopByBrand, HotSellers, ShopByDiscount, ProductsByCategory, LoginPage, SignupPage, AboutUsPage, TermsAndConditionsPage, PrivacyPolicyPage, ProductCard, OrderHistoryPage, Appointment, FaqsPage, FaqsCard,
   AppointmentLocation, AddtoCart, SingleMedicine, GoToTop, Pagination,
-  Bot, useLoading
+  Bot, useLoading, PatientDashboardPage, ProductDetailsPage, FeaturedMedicines
 };
 
 

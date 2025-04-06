@@ -5,8 +5,10 @@ import "react-toastify/dist/ReactToastify.css";
 import { Helmet } from "react-helmet";
 import Lottie from "react-lottie";
 import animationData from "../../lottie-animation/loginAnimation.json"; // Replace with your Lottie animation file
+import api from "../../axios/axios.jsx";
 
 function SignupPage() {
+  const navigate = useNavigate();
   const [strength, setStrength] = useState(0);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -16,7 +18,7 @@ function SignupPage() {
     phone: "",
     email: "",
     gender: "",
-    role: "",
+    role: "Patient",
     password: "",
     cpassword: "",
   });
@@ -37,28 +39,103 @@ function SignupPage() {
       return;
     }
     console.log("Form data", formData);
-    toast.success("Form submitted successfully!");
 
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/v1/user/patient/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+      let response;
+      
+      // Use different endpoints based on role
+      if (formData.role === "Doctor") {
+        // For doctor registration, create a formatted doctor object
+        const doctorData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          gender: formData.gender,
+          address: {
+            country: "India",
+            city: "Mumbai",
+            pincode: "400001"
           },
-          body: JSON.stringify(formData),
+          department: {
+            name: "General Medicine",
+            description: "General practitioner"
+          },
+          specializations: [{
+            name: "General Medicine",
+            description: "General practitioner"
+          }],
+          qualifications: ["MBBS"],
+          experience: "1 YEARS EXP.",
+          availabelSlots: {
+            days: ["Monday", "Wednesday", "Friday"],
+            hours: "10:00 AM - 5:00 PM"
+          },
+          role: "Doctor",
+          languagesKnown: ["English"],
+          appointmentCharges: "1000",
+          docAvatar: "https://randomuser.me/api/portraits/men/32.jpg"
+        };
+        
+        console.log("Sending doctor registration data:", doctorData);
+        
+        try {
+          // First check if server is reachable
+          const serverCheck = await api.get("/doctor");
+          console.log("Server check response:", serverCheck.data);
+          
+          // Send registration request
+          response = await api.post("/doctor/register", doctorData);
+          console.log("Doctor registration response:", response.data);
+        } catch (error) {
+          console.error("Doctor registration error details:", error);
+          
+          if (error.response) {
+            console.error("Error response status:", error.response.status);
+            console.error("Error response data:", error.response.data);
+            toast.error(error.response.data.message || "Failed to create doctor account");
+          } else if (error.request) {
+            console.error("No response received:", error.request);
+            toast.error("Server not responding. Please try again later.");
+          } else {
+            console.error("Error setting up request:", error.message);
+            toast.error("Error setting up request. Please try again.");
+          }
+          
+          throw error; // Rethrow to prevent further execution
         }
-      );
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+      } else {
+        // For patient registration
+        response = await api.post("/user/patient/register", formData);
       }
 
-      const data = await response.json();
-      console.log(data); // Handle response data
+      console.log("Registration success:", response.data);
+      
+      // After successful registration, also save address to userAddresses in localStorage
+      // so it's available during checkout
+      if (formData.address && formData.role === "Patient") {
+        const newUserAddress = {
+          id: `addr_signup_${Date.now()}`,
+          fullName: `${formData.firstName} ${formData.lastName}`,
+          addressLine1: formData.address,
+          addressLine2: '',
+          city: '', // We don't collect city in the signup form
+          state: '',
+          postalCode: '',
+          phoneNumber: formData.phone,
+          isDefault: true
+        };
+        
+        const existingAddresses = JSON.parse(localStorage.getItem('userAddresses') || '[]');
+        localStorage.setItem('userAddresses', JSON.stringify([...existingAddresses, newUserAddress]));
+      }
+      
+      toast.success("Account created successfully!");
+      navigate("/login");
     } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
+      console.error("Registration error:", error);
+      toast.error(error.response?.data?.message || "Failed to create account. Please try again.");
     }
   };
 
@@ -231,7 +308,6 @@ function SignupPage() {
                   <option value="">Select Role</option>
                   <option value="Admin">Admin</option>
                   <option value="Patient">Patient</option>
-                  <option value="Doctor">Doctor</option>
                 </select>
               </div>
               <div className="w-1/2 px-2 mb-4">

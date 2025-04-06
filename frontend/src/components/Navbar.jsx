@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -15,23 +15,69 @@ import { FaRegCalendarCheck, FaRegHeart } from "react-icons/fa";
 import { LuBox } from "react-icons/lu";
 import { IoIosLogOut } from "react-icons/io";
 import { FaRegCircleUser } from "react-icons/fa6";
+import { MdDashboard } from "react-icons/md";
 import { Context } from "../Context/Context";
+import { useCart } from "../Context/CartContext";
 
 function Navbar() {
-  const { isAuthe } = useContext(Context);
+  const { isAuthenticated, user, setIsAuthenticated, setUser } = useContext(Context);
+  const { totalItems } = useCart();
   const [show, setShow] = useState(false);
-  const handleLogIn = async () => {
-    console.log("working");
-  };
-  const handleLogOut = async () => {
-    console.log("working");
-  };
-
+  
   const navigate = useNavigate();
+
+  const handleLogIn = async () => {
+    if (isAuthenticated) {
+      setDropdownOpen(!isDropdownOpen);
+    } else {
+      navigate("/login");
+    }
+  };
+  
+  const handleLogOut = async () => {
+    try {
+      // Here you would call your logout API
+      // const response = await api.get("/user/logout");
+      
+      // For now, just clear the state
+      setIsAuthenticated(false);
+      setUser({});
+      localStorage.removeItem("token");
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   // state to manage drop down menu
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const dropdownRef = React.useRef(null);
+  const buttonRef = React.useRef(null);
+  
+  // For delayed closing of dropdown
+  const timeoutRef = React.useRef(null);
+  
+  // Enhanced mouse events for dropdown menu with delay
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setDropdownOpen(false);
+    }, 300); // 300ms delay before closing
+  };
+  
+  // Handle login/signup navigation
+  const handleMenuNavigation = (path) => {
+    // Keep dropdown open during navigation
+    navigate(path);
+  };
 
   // Nav items
   const navItems = [
@@ -51,27 +97,35 @@ function Navbar() {
     setMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  // Get the appropriate dashboard URL based on user role
+  const getDashboardUrl = () => {
+    if (!user || !user.role) return "/patient-dashboard";
+    
+    switch(user.role) {
+      case "Patient":
+        return "/patient-dashboard";
+      case "Doctor":
+        return "/doctor-dashboard";
+      case "Admin":
+        return "/admin-dashboard";
+      default:
+        return "/patient-dashboard";
+    }
+  };
+
   // Dropdown menus
-  const dropdownMenus = [
-    { to: "/profile", label: "My Profile", icon: FaRegCircleUser },
-    { to: "/appointments", label: "Appointments", icon: FaRegCalendarCheck },
-    { to: "medicines/wishlist", label: "Wishlist", icon: FaRegHeart },
-    { to: "medicines/order_history", label: "Orders", icon: LuBox },
-    { to: "/logout", label: "Logout", icon: IoIosLogOut },
-  ];
-
-  // mouse events on drop down menu
-  const handleMouseEnter = () => {
-    setDropdownOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    setDropdownOpen(false);
-  };
-
-  const handleNavigation = () => {
-    navigate("/medicines/cart");
-  };
+  const dropdownMenus = isAuthenticated 
+    ? [
+        { to: getDashboardUrl(), label: "Dashboard", icon: MdDashboard },
+        { to: "/appointment", label: "Appointments", icon: FaRegCalendarCheck },
+        { to: "/medicines/wishlist", label: "Wishlist", icon: FaRegHeart },
+        { to: "/medicines/order_history", label: "Orders", icon: LuBox },
+        { to: "#", label: "Logout", icon: IoIosLogOut, onClick: handleLogOut },
+      ]
+    : [
+        { to: "/login", label: "Login", icon: FaRegCircleUser },
+        { to: "/signup", label: "Signup", icon: FaRegCircleUser },
+      ];
 
   const socialLinks = [
     {
@@ -87,8 +141,38 @@ function Navbar() {
     { to: "https://discord.gg/krQd2Fss", label: "discord", icon: FaDiscord },
   ];
 
+  const handleNavigation = () => {
+    navigate("/medicines/cart");
+  };
+
+  // Handle clicks outside of dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    
+    // Add event listener
+    document.addEventListener("mousedown", handleClickOutside);
+    
+    // Cleanup function
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      // Also clear any pending timeouts
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="w-full h-[8vh] sticky top-0 z-50">
+    <div className="w-full min-h-[64px] h-[8vh] sticky top-0 z-[999] bg-white shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-3 md:px-4 h-full">
         {/* logo */}
         <NavLink to="/">
@@ -108,37 +192,81 @@ function Navbar() {
               </li>
             ))}
             <li
-              className="relative hover:scale-105"
+              className="relative"
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              <NavLink
-                to="/login"
-                className="text-md font-semibold relative cursor-pointer rounded flex items-center border border-dark_theme text-dark_theme px-4 py-2 gap-2 max-w-[150px]"
+              <button
+                ref={buttonRef}
+                className="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
                 onClick={handleLogIn}
               >
-                <FaRegCircleUser className="text-dark_theme" />
-                <span className="truncate">Login</span>
-              </NavLink>
+                {isAuthenticated ? (
+                  <>
+                    <span className="h-8 w-8 flex items-center justify-center rounded-full bg-main_theme/10 text-main_theme font-medium">
+                      {user?.firstName?.charAt(0) || 'U'}
+                    </span>
+                    <span className="font-medium text-gray-700 pr-1">
+                      {user?.firstName || 'User'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <FaRegCircleUser className="text-main_theme text-lg" />
+                    <span className="font-medium text-gray-700">Login</span>
+                  </>
+                )}
+              </button>
 
               {/* Dropdown Menus */}
               {isDropdownOpen && (
                 <div
-                  className="absolute left-0 mt-0 w-56 bg-light_theme border border-dark_theme rounded shadow-lg z-50"
+                  ref={dropdownRef}
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl z-50 border border-gray-100 overflow-hidden animate-fadeIn"
                   onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
                 >
+                  {isAuthenticated && (
+                    <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                      <p className="text-sm font-medium text-gray-800">Welcome,</p>
+                      <p className="text-sm text-gray-600 truncate">{user?.firstName || 'User'}</p>
+                    </div>
+                  )}
+                  
                   {/* Drop down menu items */}
                   {dropdownMenus.map((menu, index) => (
-                    <NavLink
-                      key={index}
-                      to={menu.to}
-                      className="flex items-center px-4 py-3 gap-2 text-sm font-medium text-dark_theme hover:bg-main_theme/10"
-                    >
-                      {menu.icon && (
-                        <menu.icon className="text-dark_theme size-4" />
-                      )}
-                      {menu.label}
-                    </NavLink>
+                    menu.onClick ? (
+                      <button
+                        key={index}
+                        onClick={menu.onClick}
+                        className="w-full flex items-center px-4 py-3 gap-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        {menu.icon && (
+                          <menu.icon className="text-main_theme size-5" />
+                        )}
+                        {menu.label}
+                      </button>
+                    ) : (
+                      <NavLink
+                        key={index}
+                        to={menu.to}
+                        className={({isActive}) => 
+                          `flex items-center px-4 py-3 gap-3 text-sm font-medium ${
+                            isActive ? 'text-main_theme bg-gray-50' : 'text-gray-700 hover:bg-gray-50'
+                          } transition-colors`
+                        }
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleMenuNavigation(menu.to);
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                      >
+                        {menu.icon && (
+                          <menu.icon className="text-main_theme size-5" />
+                        )}
+                        {menu.label}
+                      </NavLink>
+                    )
                   ))}
                 </div>
               )}
@@ -168,9 +296,11 @@ function Navbar() {
             role="button"
           >
             <IoCartOutline className="text-dark_theme size-8 hidden md:block mr-1" />
-            <div className="absolute bottom-4 left-4 border border-main_theme rounded-full cursor-pointer z-50 bg-main_theme/90 text-light_theme">
-              <span className="px-2 py-2 text-xs font-medium">7</span>
-            </div>
+            {totalItems > 0 && (
+              <div className="absolute bottom-4 left-4 border border-main_theme rounded-full cursor-pointer z-50 bg-main_theme/90 text-light_theme">
+                <span className="px-2 py-2 text-xs font-medium">{totalItems}</span>
+              </div>
+            )}
           </div>
 
           {socialLinks.map((socialLink, index) => (
@@ -185,75 +315,110 @@ function Navbar() {
       {isMobileMenuOpen && (
         <div>
           <div
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
             onClick={toggleMobileMenu}
           ></div>
-          <div className="lg:hidden bg-gray-200 w-2/3 md:w-3/5 min-h-screen absolute right-0 z-50 px-4 py-4">
-            <ul className="w-full flex flex-col items-start px-4 py-4">
+          <div className="lg:hidden bg-white w-3/4 md:w-1/2 min-h-screen absolute right-0 z-50 shadow-xl animate-slide-in">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold text-dark_theme">Menu</h3>
+              <button onClick={toggleMobileMenu} className="text-gray-500 hover:text-gray-700">
+                <FaTimes size={24} />
+              </button>
+            </div>
+            
+            <ul className="p-4">
               {navItems.map((navItem, index) => (
-                <li key={index} className="mb-4">
+                <li key={index} className="py-3 border-b border-gray-100">
                   <NavLink
                     to={navItem.to}
-                    className={navLinkClass}
+                    className={({isActive}) => 
+                      `flex items-center text-base ${isActive ? 'text-main_theme font-medium' : 'text-gray-700'}`
+                    }
                     onClick={toggleMobileMenu}
                   >
                     {navItem.label}
                   </NavLink>
                 </li>
               ))}
-              <li className="relative  mb-4">
-                <NavLink
-                  to="/login"
-                  className="text-md font-semibold relative cursor-pointer rounded flex items-center border border-dark_theme text-dark_theme px-4 py-2 gap-2"
-                  onClick={toggleMobileMenu}
-                >
-                  <FaRegCircleUser className="text-dark_theme" />
-                  <span className="truncate">Login</span>
-                </NavLink>
-
-                {/* Dropdown Menus */}
-                {isDropdownOpen && (
-                  <div className="w-full bg-light_theme border border-dark_theme rounded shadow-lg z-50 mt-2">
-                    {dropdownMenus.map((menu, index) => (
+              
+              {isAuthenticated ? (
+                <>
+                  <li className="py-3 mt-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="h-10 w-10 flex items-center justify-center rounded-full bg-main_theme/10 text-main_theme font-medium">
+                        {user?.firstName?.charAt(0) || 'U'}
+                      </span>
+                      <div>
+                        <p className="font-medium text-gray-800">{user?.firstName || 'User'}</p>
+                        <p className="text-sm text-gray-500">{user?.email || ''}</p>
+                      </div>
+                    </div>
+                  </li>
+                  
+                  {dropdownMenus.slice(0, -1).map((menu, index) => (
+                    <li key={index} className="py-3 border-b border-gray-100">
                       <NavLink
-                        key={index}
                         to={menu.to}
-                        className="flex items-center px-4 py-3 gap-2 text-sm font-medium text-dark_theme hover:bg-main_theme/10"
+                        className={({isActive}) => 
+                          `flex items-center gap-3 ${isActive ? 'text-main_theme' : 'text-gray-700'}`
+                        }
                         onClick={toggleMobileMenu}
                       >
-                        {menu.icon && (
-                          <menu.icon className="text-dark_theme size-4" />
-                        )}{" "}
+                        {menu.icon && <menu.icon className="text-main_theme" />}
                         {menu.label}
                       </NavLink>
-                    ))}
-                  </div>
-                )}
-              </li>
-
-              {/* Social Icons (mobile) */}
-              <div className="flex gap-3 items-center justify-center">
+                    </li>
+                  ))}
+                  
+                  <li className="py-3 mt-2">
+                    <button
+                      onClick={() => {
+                        handleLogOut();
+                        toggleMobileMenu();
+                      }}
+                      className="flex items-center gap-3 text-red-500"
+                    >
+                      <IoIosLogOut />
+                      Logout
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="py-3 mt-4">
+                    <NavLink
+                      to="/login"
+                      className="w-full flex items-center justify-center gap-2 bg-main_theme text-white py-2 px-4 rounded-md"
+                      onClick={toggleMobileMenu}
+                    >
+                      <FaRegCircleUser />
+                      Login
+                    </NavLink>
+                  </li>
+                  <li className="py-3">
+                    <NavLink
+                      to="/signup"
+                      className="w-full flex items-center justify-center gap-2 border border-main_theme text-main_theme py-2 px-4 rounded-md"
+                      onClick={toggleMobileMenu}
+                    >
+                      <FaRegCircleUser />
+                      Signup
+                    </NavLink>
+                  </li>
+                </>
+              )}
+            </ul>
+            
+            <div className="absolute bottom-8 left-0 w-full px-4">
+              <div className="flex justify-center gap-6 mb-4">
                 {socialLinks.map((socialLink, index) => (
-                  <NavLink key={index} to={socialLink.to} target="_blank">
-                    <socialLink.icon className="text-dark_theme/90 size-5 hover:scale-110" />
-                  </NavLink>
+                  <a key={index} href={socialLink.to} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-main_theme">
+                    <socialLink.icon size={20} />
+                  </a>
                 ))}
               </div>
-
-              {/* Cart (mobile) */}
-              <div className="hidden relative">
-                <div
-                  className="cursor-pointer"
-                  role="button"
-                  onClick={handleNavigation}
-                >
-                  <IoCartOutline className="text-dark_theme size-8 mr-1" />
-                  <div className="absolute bottom-4 left-4 border border-main_theme rounded-full cursor-pointer z-50 bg-main_theme/90 text-light_theme">
-                    <span className="px-2 py-2 text-xs font-medium">7</span>
-                  </div>
-                </div>
-              </div>
-            </ul>
+              <p className="text-center text-sm text-gray-500">© 2023 MediHub. All rights reserved.</p>
+            </div>
           </div>
         </div>
       )}

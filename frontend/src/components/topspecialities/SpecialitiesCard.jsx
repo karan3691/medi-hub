@@ -6,36 +6,36 @@ const SpecialitiesCard = ({ speciality }) => {
   if (loading || !speciality) return <SkeletonLoading type="speciality" />;
 
   return (
-    <section className="w-full flex flex-col gap-y-3 items-center max-w-72 border border-text_grey/40 rounded-md py-3 px-3 bg-gray-300/20 transition duration-300 ease-in-out shadow-md transform hover:scale-105 hover:shadow-md text-center">
-      {/* title */}
-      <div className="overflow-hidden w-full">
-        <h2 className="text-lg md:text-xl font-semibold text-dark_theme line-clamp-1">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 flex flex-col h-full">
+      <div className="p-6 flex flex-col items-center text-center h-full">
+        {/* Icon */}
+        <div className="w-20 h-20 mb-4 flex items-center justify-center rounded-full bg-gray-50 p-1">
+          <img 
+            src={speciality.icon} 
+            alt={`${speciality.name} icon`} 
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        {/* Title */}
+        <h3 className="text-lg font-bold text-dark_theme mb-2">
           {speciality.name}
-        </h2>
-      </div>
+        </h3>
 
-      {/* icon */}
-      <div className="flex justify-center items-center w-16 h-16 md:w-24 md:h-24 border-2 border-green-0 mb-2">
-        <img
-          src={speciality.icon}
-          alt="speciality image"
-          className="w-full h-full object-cover object-center mix-blend-multiply border-none"
-        />
-      </div>
-
-      {/* description */}
-      <div className="overflow-hidden w-full">
-        <p className="text-sm text-dark_theme/80 text-center tracking-tight leading-tight line-clamp-2">
+        {/* Description */}
+        <p className="text-gray-600 text-sm mb-4">
           {speciality.desc}
         </p>
-      </div>
 
-      <div className="overflow-hidden w-full">
-        <p className="text-sm text-center text-dark_theme font-medium tracking-tight leading-tight line-clamp-2">
-          {speciality.symptoms.join(", ")}
-        </p>
+        {/* Symptoms */}
+        <div className="mt-auto">
+          <h4 className="text-xs font-semibold uppercase text-gray-500 mb-2">Common Issues</h4>
+          <p className="text-sm text-main_theme">
+            {speciality.symptoms.join(", ")}
+          </p>
+        </div>
       </div>
-    </section>
+    </div>
   );
 };
 

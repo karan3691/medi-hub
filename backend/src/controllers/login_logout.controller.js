@@ -8,27 +8,15 @@ import { generateToken } from "../utilis/jwtToken.js";
 //! Login the user
 export const login = asyncHandler(async (req, res, next) => {
     // taking the info from the user
-    const { email, password, confirmPassword, role, token } = req.body;
+    const { email, password, confirmPassword, role } = req.body;
 
     // checking the info provided by the user
-    if (!email || !password || !confirmPassword || !role) {
-        throw new ApiError("Please Fill Full Form!", 400);
+    if (!email || !password || !role) {
+        throw new ApiError(400, "Please provide email, password, and role");
     }
     // check if password and confirm password matches
-    if (password !== confirmPassword) {
+    if (confirmPassword && password !== confirmPassword) {
         throw new ApiError(400, "Password and Confirm Password do not match!");
-    }
-
-    // Verify the reCAPTCHA token
-    const response = await axios.post('https://www.google.com/recaptcha/api/siteverify', null, {
-        params: {
-            secret: '6LdzteopAAAAAHwBYUTrGjupn-LuF8ox6Uc7n1Uy',
-            response: token
-        }
-    });
-    
-    if (!response.data.success) {
-        throw new ApiError(400, "reCAPTCHA verification failed");
     }
 
     // ! checking the user provide correct details for login
@@ -41,22 +29,21 @@ export const login = asyncHandler(async (req, res, next) => {
         // Find doctor in doctor collection
         user = await Doctor.findOne({ email }).select("+password");
     } else {
-        throw new ApiError(400, "Invalid email or password");
+        throw new ApiError(400, "Invalid role specified");
     }
 
     // Check if user or doctor exists
     if (!user) {
         throw new ApiError(400, `User with ${role} role not found`);
-
     }
 
     // Check if password matches
     const isPasswordMatched = await user.comparePassword(password);
     if (!isPasswordMatched) {
-        throw new ApiError("Invalid email or password", 400);
+        throw new ApiError(400, "Invalid email or password");
     }
 
-    generateToken(user, "User Logged In Successfully", 200, res)
+    generateToken(user, "User Logged In Successfully", 200, res);
 })
 
 

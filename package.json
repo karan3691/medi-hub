@@ -1,0 +1,14 @@
+{
+  "name": "medi-hub-sample-data",
+  "version": "1.0.0",
+  "description": "Script to add sample data to MediHub database",
+  "type": "module",
+  "main": "add-sample-data.js",
+  "scripts": {
+    "start": "node add-sample-data.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.0",
+    "form-data": "^4.0.0"
+  }
+} 

@@ -18,6 +18,18 @@ body {
     height: 100vh;
 }
 
+/* Page content class for proper spacing below navbar */
+.page-content {
+    padding-top: 0; /* Remove the top padding that's causing whitespace */
+    min-height: calc(100vh - 8vh); /* Ensures content fills the screen minus navbar */
+}
+
+/* Specific class for the medicines page to ensure no whitespace */
+.medicines-page {
+    margin-top: 0;
+    padding-top: 0;
+}
+
 /* Style the scrollbar */
 ::-webkit-scrollbar {
     width: 0px;
@@ -35,3 +47,42 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #03686b;
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Add staggered animations for doctor cards */
+.grid > div:nth-child(1) { animation-delay: 0.05s; }
+.grid > div:nth-child(2) { animation-delay: 0.1s; }
+.grid > div:nth-child(3) { animation-delay: 0.15s; }
+.grid > div:nth-child(4) { animation-delay: 0.2s; }
+.grid > div:nth-child(5) { animation-delay: 0.25s; }
+.grid > div:nth-child(6) { animation-delay: 0.3s; }
+.grid > div:nth-child(7) { animation-delay: 0.35s; }
+.grid > div:nth-child(8) { animation-delay: 0.4s; }
+.grid > div:nth-child(9) { animation-delay: 0.45s; }
